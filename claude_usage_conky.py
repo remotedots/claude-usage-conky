@@ -8,8 +8,8 @@ import urllib.request
 import zoneinfo
 
 CREDS  = Path.home() / ".claude" / ".credentials.json"
-CACHE  = Path("/tmp/claude_usage_cache.json")
-LOCK   = Path("/tmp/claude_usage_cache.lock")
+CACHE  = Path("/tmp/claude_usage_conky_cache.json")
+LOCK   = Path("/tmp/claude_usage_conky_cache.lock")
 API    = "https://api.anthropic.com/api/oauth/usage"
 TZ     = zoneinfo.ZoneInfo("Europe/Amsterdam")
 TTL    = 290  # seconds — just under the 300s Conky refresh interval

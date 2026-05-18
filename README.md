@@ -1,28 +1,16 @@
 # Claude Usage Conky
 
-A Conky desktop overlay that mirrors Claude Code's `/usage` output — session and weekly usage bars with exact reset times.
-
-> **Note:** This is an independent project, not affiliated with or part of [ccusage](https://ccusage.com/).
-
-![Two progress bars: current session % and current week % with reset times](screenshot.png)
+A Conky desktop overlay that mimics Claude Code's `/usage` output: session and weekly usage bars with exact reset times.
 
 ## What it shows
 
-```
-Current session                   41% used
-▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░
-Resets 2:09pm (Europe/Amsterdam)
-
-Current week (all models)          4% used
-▓░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-Resets May 22, 4am (Europe/Amsterdam)
-```
+![Two progress bars: current session % and current week % with reset times](screenshot.png)
 
 ## How it works
 
-The script calls `https://api.anthropic.com/api/oauth/usage` — the same endpoint Claude Code's `/usage` command uses — with the OAuth token stored in `~/.claude/.credentials.json`. No tokens are consumed and it doesn't affect your usage limit.
+The script calls `https://api.anthropic.com/api/oauth/usage` (the same endpoint Claude Code's `/usage` command uses) with the OAuth token stored in `~/.claude/.credentials.json`. No tokens are consumed and it doesn't affect your usage limit.
 
-Results are cached in `/tmp/claude_usage_conky_cache.json` for 60 seconds so the API is only hit once per Conky refresh cycle (the config calls the script 4 times per update: header/bar/footer × 2).
+Results are cached in `/tmp/claude_usage_conky_cache.json` for 60 seconds so the API is only hit once per Conky refresh cycle (the config calls the script 6 times per update: header/bar/footer × 2 sections).
 
 ## Requirements
 
@@ -51,7 +39,7 @@ X-GNOME-Autostart-enabled=true
 
 ### Already using Conky?
 
-**Option A — run as a second instance** (simplest, no conflicts):
+**Option A: Run as a second instance** (simplest, no conflicts):
 
 ```bash
 # start both independently
@@ -61,7 +49,7 @@ conky -c ~/.config/conky/claude_usage_conky.conf &
 
 Each instance has its own position, font, and update interval.
 
-**Option B — merge into your existing config**:
+**Option B: Merge into your existing config**:
 
 1. Copy `claude_usage_conky.py` to `~/.config/conky/`
 2. Add to your existing `conky.config` block (if not already present):
@@ -89,4 +77,4 @@ Each instance has its own position, font, and update interval.
 
 **Position options** (`alignment` in `claude_usage_conky.conf`): `top_right`, `top_left`, `bottom_right`, `bottom_left`, `top_middle`, etc.
 
-**Refresh interval**: currently 300 seconds (5 min). Safe to lower to 60s — the endpoint is lightweight metadata, not inference.
+**Refresh interval**: currently 300 seconds (5 min). Safe to lower to 60s, the endpoint is lightweight metadata, not inference.
