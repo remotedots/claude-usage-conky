@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
-# Usage: claude_usage.py [header|pct|footer] [session|week]
-# Called multiple times per Conky refresh; uses a 60s file cache.
-import json, sys, time
+# Outputs a single plain value. Called from conky.text with one argument:
+#   session_pct | session_reset | week_pct | week_reset
+import json, sys, time, fcntl
 from datetime import datetime
 from pathlib import Path
 import urllib.request
 import zoneinfo
 
-CREDS  = Path.home() / ".claude" / ".credentials.json"
-CACHE  = Path("/tmp/claude_usage_conky_cache.json")
-LOCK   = Path("/tmp/claude_usage_conky_cache.lock")
-API    = "https://api.anthropic.com/api/oauth/usage"
-TZ     = zoneinfo.ZoneInfo("Europe/Amsterdam")
-TTL    = 290  # seconds — just under the 300s Conky refresh interval
+CREDS = Path.home() / ".claude" / ".credentials.json"
+CACHE = Path("/tmp/claude_usage_conky_cache.json")
+LOCK  = Path("/tmp/claude_usage_conky_cache.lock")
+API   = "https://api.anthropic.com/api/oauth/usage"
+TZ    = zoneinfo.ZoneInfo("Europe/Amsterdam")
+TTL   = 290
 
 
 def load_data():
-    import fcntl
-    now = time.time()
     if CACHE.exists():
         cached = json.loads(CACHE.read_text())
-        if now - cached.get("_ts", 0) < TTL:
+        if time.time() - cached.get("_ts", 0) < TTL:
             return cached
-    # Only one process fetches; others wait and read the result
     with open(LOCK, "w") as lf:
         fcntl.flock(lf, fcntl.LOCK_EX)
-        # Re-check after acquiring lock — another process may have fetched
         if CACHE.exists():
             cached = json.loads(CACHE.read_text())
             if time.time() - cached.get("_ts", 0) < TTL:
@@ -49,40 +45,20 @@ def fmt_reset(iso_str):
     return dt.strftime("%b %-d, %-I%p").lower().replace(":00", "") + f" ({TZ.key})"
 
 
-def c(color, text):
-    return f"${{color {color}}}{text}${{color}}"
-
-
-C_TITLE = "#FFFFFF"
-C_PCT   = "#AAAAAA"
-C_RESET = "#666666"
-C_ERR   = "#E06C75"
-
-mode   = sys.argv[1] if len(sys.argv) > 1 else "header"
-target = sys.argv[2] if len(sys.argv) > 2 else "session"
+key = sys.argv[1] if len(sys.argv) > 1 else "session_pct"
 
 try:
     data = load_data()
 except Exception as e:
-    if mode == "pct":
-        print(0)
-    else:
-        print(c(C_ERR, f"error: {e}"))
+    print("0" if key.endswith("_pct") else f"error: {e}")
     sys.exit(0)
 
-if target == "session":
-    block = data.get("five_hour") or {}
-    title = "Current session"
-else:
-    block = data.get("seven_day") or {}
-    title = "Current week (all models)"
+five = data.get("five_hour") or {}
+week = data.get("seven_day") or {}
 
-pct       = round(block.get("utilization", 0))
-reset_str = fmt_reset(block.get("resets_at"))
-
-if mode == "header":
-    print(c(C_TITLE, title) + "${alignr}" + c(C_PCT, f"{pct}% used"))
-elif mode == "pct":
-    print(pct)
-elif mode == "footer":
-    print(c(C_RESET, f"Resets {reset_str}"))
+print({
+    "session_pct":   str(round(five.get("utilization", 0))),
+    "session_reset": fmt_reset(five.get("resets_at")),
+    "week_pct":      str(round(week.get("utilization", 0))),
+    "week_reset":    fmt_reset(week.get("resets_at")),
+}.get(key, "?"))
