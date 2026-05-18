@@ -9,23 +9,34 @@ import zoneinfo
 
 CREDS  = Path.home() / ".claude" / ".credentials.json"
 CACHE  = Path("/tmp/claude_usage_cache.json")
+LOCK   = Path("/tmp/claude_usage_cache.lock")
 API    = "https://api.anthropic.com/api/oauth/usage"
 TZ     = zoneinfo.ZoneInfo("Europe/Amsterdam")
-TTL    = 60  # seconds
+TTL    = 290  # seconds — just under the 300s Conky refresh interval
 
 
 def load_data():
+    import fcntl
+    now = time.time()
     if CACHE.exists():
         cached = json.loads(CACHE.read_text())
-        if time.time() - cached.get("_ts", 0) < TTL:
+        if now - cached.get("_ts", 0) < TTL:
             return cached
-    token = json.loads(CREDS.read_text())["claudeAiOauth"]["accessToken"]
-    req = urllib.request.Request(API, headers={"Authorization": f"Bearer {token}"})
-    with urllib.request.urlopen(req, timeout=8) as r:
-        data = json.loads(r.read())
-    data["_ts"] = time.time()
-    CACHE.write_text(json.dumps(data))
-    return data
+    # Only one process fetches; others wait and read the result
+    with open(LOCK, "w") as lf:
+        fcntl.flock(lf, fcntl.LOCK_EX)
+        # Re-check after acquiring lock — another process may have fetched
+        if CACHE.exists():
+            cached = json.loads(CACHE.read_text())
+            if time.time() - cached.get("_ts", 0) < TTL:
+                return cached
+        token = json.loads(CREDS.read_text())["claudeAiOauth"]["accessToken"]
+        req = urllib.request.Request(API, headers={"Authorization": f"Bearer {token}"})
+        with urllib.request.urlopen(req, timeout=8) as r:
+            data = json.loads(r.read())
+        data["_ts"] = time.time()
+        CACHE.write_text(json.dumps(data))
+        return data
 
 
 def fmt_reset(iso_str):
