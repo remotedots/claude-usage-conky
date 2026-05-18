@@ -10,7 +10,7 @@ A Conky desktop overlay that mimics Claude Code's `/usage` output: session and w
 
 The script calls `https://api.anthropic.com/api/oauth/usage` (the same endpoint Claude Code's `/usage` command uses) with the OAuth token stored in `~/.claude/.credentials.json`. No tokens are consumed and it doesn't affect your usage limit.
 
-Results are cached in `/tmp/claude_usage_conky_cache.json` for 60 seconds so the API is only hit once per Conky refresh cycle (the config calls the script 6 times per update: header/bar/footer × 2 sections).
+Results are cached in `/tmp/claude_usage_conky_cache.json` so the API is only hit once per Conky refresh cycle. The config calls the script 6 times per update (4 values × 2 sections, with `session_pct` called twice — once for the label, once for the bar), but only the first call fetches; the rest read from cache.
 
 ## Requirements
 
@@ -59,13 +59,13 @@ Each instance has its own position, font, and update interval.
    ```
 3. Append to your existing `conky.text`:
    ```
-   ${execp python3 ~/.config/conky/claude_usage_conky.py header session}
-   ${color #4EC9B0}${execbar python3 ~/.config/conky/claude_usage_conky.py pct session}
-   ${execp python3 ~/.config/conky/claude_usage_conky.py footer session}
+   ${color #FFFFFF}Current session${alignr}${color #AAAAAA}${exec python3 ~/.config/conky/claude_usage_conky.py session_pct}% used
+   ${color #4EC9B0}${execbar python3 ~/.config/conky/claude_usage_conky.py session_pct}
+   ${color #666666}Resets ${exec python3 ~/.config/conky/claude_usage_conky.py session_reset}
 
-   ${execp python3 ~/.config/conky/claude_usage_conky.py header week}
-   ${color #4EC9B0}${execbar python3 ~/.config/conky/claude_usage_conky.py pct week}
-   ${execp python3 ~/.config/conky/claude_usage_conky.py footer week}
+   ${color #FFFFFF}Current week (all models)${alignr}${color #AAAAAA}${exec python3 ~/.config/conky/claude_usage_conky.py week_pct}% used
+   ${color #4EC9B0}${execbar python3 ~/.config/conky/claude_usage_conky.py week_pct}
+   ${color #666666}Resets ${exec python3 ~/.config/conky/claude_usage_conky.py week_reset}
    ```
 
 ## Configuration
@@ -73,7 +73,7 @@ Each instance has its own position, font, and update interval.
 | File | What to change |
 |------|---------------|
 | `claude_usage_conky.conf` | Position (`alignment`, `gap_x`, `gap_y`), font, bar height, refresh interval |
-| `claude_usage_conky.py` | Timezone (`TZ`), bar color (`C_BAR`), cache TTL (`TTL`) |
+| `claude_usage_conky.py` | Timezone (`TZ`), cache TTL (`TTL`) |
 
 **Position options** (`alignment` in `claude_usage_conky.conf`): `top_right`, `top_left`, `bottom_right`, `bottom_left`, `top_middle`, etc.
 
