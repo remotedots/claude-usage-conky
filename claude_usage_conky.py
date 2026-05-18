@@ -12,7 +12,7 @@ CACHE = Path("/tmp/claude_usage_conky_cache.json")
 LOCK  = Path("/tmp/claude_usage_conky_cache.lock")
 API   = "https://api.anthropic.com/api/oauth/usage"
 TZ    = zoneinfo.ZoneInfo("Europe/Amsterdam")
-TTL   = 290
+TTL   = 590
 
 
 def load_data():

@@ -77,4 +77,4 @@ Each instance has its own position, font, and update interval.
 
 **Position options** (`alignment` in `claude_usage_conky.conf`): `top_right`, `top_left`, `bottom_right`, `bottom_left`, `top_middle`, etc.
 
-**Refresh interval**: currently 300 seconds (5 min). Safe to lower to 60s, the endpoint is lightweight metadata, not inference.
+**Refresh interval**: currently 600 seconds (10 min). The endpoint is lightweight metadata, not inference, but Anthropic rate-limits it — don't go below 300s.
