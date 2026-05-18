@@ -4,7 +4,7 @@ A Conky desktop overlay that mirrors Claude Code's `/usage` output — session a
 
 > **Note:** This is an independent project, not affiliated with or part of [ccusage](https://ccusage.com/).
 
-![Two progress bars: current session % and current week % with reset times]
+![Two progress bars: current session % and current week % with reset times](screenshot.png)
 
 ## What it shows
 
